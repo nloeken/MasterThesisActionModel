@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from configalt import MERGED_DIR
+from config import MERGED_DIR
 from utils import safe_eval
 
 def load_and_preprocess():

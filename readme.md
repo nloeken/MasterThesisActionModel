@@ -7,7 +7,10 @@ This repository contains the code and data processing pipeline explained in the 
 The goal of this project is to build a machine learning model that predicts the next action in a football game using a combination of event data (e.g., pass, shot, dribbling) and respective positional tracking data, both optained from Statsbomb Open data.  
 The core model is implemented using **XGBoost**, a powerful gradient boosting framework.
 
----
+## Data
+
+All data is retrieved from the Statsbomb open data repository.
+It can be downloaded [here](https://github.com/statsbomb/open-data) and should be placed in the `data/` folder.
 
 ## Methods & Tools
 

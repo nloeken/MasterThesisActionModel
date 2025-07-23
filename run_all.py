@@ -3,7 +3,7 @@ from data_preprocessing import load_and_preprocess
 from feature_engineering import apply_feature_engineering
 from model_training import train_model
 from model_evaluation import evaluate_model
-from configalt import COMBINED_FILE
+from config import COMBINED_FILE
 
 def main():
     #load_and_merge()
