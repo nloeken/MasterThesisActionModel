@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from config import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES
+from configalt import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES
 from utils import extract_name
 
 def load_and_merge():
