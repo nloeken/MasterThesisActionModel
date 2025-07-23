@@ -21,7 +21,20 @@ The core model is implemented using **XGBoost**, a powerful gradient boosting fr
 
 ## Project Structure
 
-<pre> ``` project-root/ ├── main.py # Main training/evaluation script ├── data/ # Raw or preprocessed event/position data ├── models/ # Saved models ├── utils/ # Helper functions and scripts ├── notebooks/ # (Optional) Jupyter Notebooks for EDA or prototyping ├── requirements.txt # Python dependencies └── README.md # This file ``` </pre>
+```
+XGBOOST/
+├── plot_events.py              # exploratory data analysis: plot events
+├── config.py                   # configuration file for data sources
+├── utils.py                    # helper functions 
+├── data_loading.py             # loading raw data
+├── data_preprocessing.py       # preprocessing raw data
+├── feature_engineering.py      # define and calculate features
+├── model_training.py/          # train XGBoost model
+├── model_evaluation.py         # evaluate model performance
+├── requirements.txt            # Python dependencies
+├── run_all.py                  # Executes whole model code
+└── README.md             
+```
 
 ## Getting Started
 
