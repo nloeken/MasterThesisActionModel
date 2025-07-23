@@ -3,11 +3,11 @@ import os
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-EVENTS_DIR = os.path.join(BASE_DIR, 'ope' 'data', 'events')
-THREE_SIXTY_DIR = os.path.join(BASE_DIR, 'data', 'three-sixty')
-MERGED_DIR = os.path.join(BASE_DIR, 'merged')
-COMBINED_FILE = os.path.join(BASE_DIR, 'combined', 'contextualevents_all.csv')
-SAMPLE_FILE = os.path.join(BASE_DIR, 'combined', 'contextualevents_sample.csv')
+EVENTS_DIR = os.path.join(BASE_DIR, 'open-data', 'data', 'events')
+THREE_SIXTY_DIR = os.path.join(BASE_DIR, 'open-data', 'data', 'three-sixty')
+MERGED_DIR = os.path.join(BASE_DIR, 'open-data', 'merged')
+COMBINED_FILE = os.path.join(BASE_DIR, 'open-data', 'combined', 'contextualevents_all.csv')
+SAMPLE_FILE = os.path.join(BASE_DIR, 'open-data', 'combined', 'contextualevents_sample.csv')
 
 # Create directories
 os.makedirs(MERGED_DIR, exist_ok=True)
