@@ -19,20 +19,9 @@ The core model is implemented using **XGBoost**, a powerful gradient boosting fr
 - Matplotlib, mplsoccer (for visualizations)
 - Tqdm
 
----
-
 ## Project Structure
 
-project-root/
-├── main.py # Main training/evaluation script
-├── data/ # Raw or preprocessed event/position data
-├── models/ # Saved models
-├── utils/ # Helper functions and scripts
-├── notebooks/ # (Optional) Jupyter Notebooks for EDA or prototyping
-├── requirements.txt # Python dependencies
-└── README.md # This file
-
----
+ <pre> ```text project-root/ ├── main.py # Main training/evaluation script ├── data/ # Raw or preprocessed event/position data ├── models/ # Saved models ├── utils/ # Helper functions and scripts ├── notebooks/ # (Optional) Jupyter Notebooks for EDA or prototyping ├── requirements.txt # Python dependencies └── README.md # This file ``` </pre> 
 
 ## Getting Started
 
@@ -40,17 +29,20 @@ project-root/
 
 ```bash
 git clone https://github.com/nloeken/xgboost.git
-
+```
 ### 2. Set up a virtual environment
 
+```bash
 python -m venv .venv
 source .venv/bin/activate         # macOS/Linux
 # .venv\Scripts\activate          # Windows
+```
 
 ### 3. Install dependencies
 
+```bash
 pip install -r requirements.txt
-
+```
 
 
 
