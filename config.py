@@ -1,7 +1,7 @@
 import os
 
 # Paths
-BASE_DIR = '/Users/nloeken/Desktop/Code/MasterThesis/open-data'
+BASE_DIR = '/Users/nloeken/Desktop//open-data'
 EVENTS_DIR = os.path.join(BASE_DIR, 'data/events/')
 THREE_SIXTY_DIR = os.path.join(BASE_DIR, 'data/three-sixty/')
 MERGED_DIR = os.path.join(BASE_DIR, 'merged/')

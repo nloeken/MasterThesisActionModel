@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def evaluate_model(model, X_test, y_test, le_action):
     y_pred = model.predict(X_test)
-    print("=== Event Prediction ===")
+    print("======= Event Prediction =======")
     print(classification_report(y_test, y_pred, target_names=le_action.classes_))
 
     explainer = shap.TreeExplainer(model)

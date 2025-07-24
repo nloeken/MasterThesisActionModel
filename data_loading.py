@@ -25,6 +25,7 @@ def load_and_merge():
             df["type_name"] = df["type"].apply(extract_name)
             df["player_name"] = df["player"].apply(extract_name)
             df["team_name"] = df["possession_team"].apply(extract_name)
+            df["match_id"] = match_id
 
             df = df[df['type_name'].isin(MAIN_EVENT_TYPES)].reset_index(drop=True)
 
@@ -34,7 +35,7 @@ def load_and_merge():
                 "carry", "dribble", "shot", "duel", "clearance", "freeze_frame", "match_id"
             ]
             df = df[[col for col in keep_cols if col in df.columns]]
-            df["match_id"] = match_id
+            
             df = df.sort_values(by=['period', 'minute', 'second', 'index']).reset_index(drop=True)
 
             out_path = os.path.join(MERGED_DIR, f"contextualevents_{match_id}.csv")

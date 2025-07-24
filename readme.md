@@ -10,7 +10,7 @@ The core model is implemented using **XGBoost**, a powerful gradient boosting fr
 ## Data
 
 All data is retrieved from the Statsbomb open data repository.
-It can be downloaded [here](https://github.com/statsbomb/open-data) and should be placed in the `data/` folder.
+It can be downloaded [here](https://github.com/statsbomb/open-data) and should be stored locally. The path should be configured in the `config` file.
 
 ## Methods & Tools
 
