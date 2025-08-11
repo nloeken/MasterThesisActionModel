@@ -1,56 +1,6 @@
 import numpy as np
 import pandas as pd
-from utils import safe_location, get_match_phase, safe_eval
-
-# success estimation (for diffferent event types) 
-def event_success(row):
-    # Pass event types:
-    if row["type_name"] == "Pass":
-        outcome = row.get("pass", {}).get("outcome", {}).get("name", "")
-        return int(outcome not in ["Incomplete", "Out"])
-    if row["type_name"] == "Clearance":
-        outcome = row.get("clearance", {}).get("outcome", {}).get("name", "")
-        return 1
-    if row["type_name"] == "Half Start":
-        outcome = row.get("half start", {}).get("outcome", {}).get("name", "")
-        return 1
-    # Shot event types:
-    if row["type_name"] == "Shot":
-        outcome = row.get("shot", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Goal", "Post", "Saved", "Saved To Post"])
-    # Dribble event types:
-    if row["type_name"] == "50/50":
-        outcome = row.get("50/50", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Won", "Success To Team"])
-    if row["type_name"] == "Carry":
-        outcome = row.get("carry", {}).get("outcome", {}).get("name", "")
-        return 1
-    if row["type_name"] == "Dribble":
-        outcome = row.get("dribble", {}).get("outcome", {}).get("name", "")
-        return int(outcome == "Complete")
-    if row["type_name"] == "Duel":
-        outcome = row.get("duel", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Won", "Success", "Success In Play", "Success Out"])
-    return 0
-
-# helper to categorize events into action categories
-def get_action_cat(row):
-    if row["type_name"] in ["Carry", "Duel", "Dribble", "50/50"]:
-        return "Dribble"
-    if row["type_name"] == "Shot":
-        return "Shot"
-    if row["type_name"] in ["Half Start", "Clearance"]:
-        return "Pass"
-    if row["type_name"] == "Pass":
-        # check for corner or cross
-        pass_info = row.get("pass", {})
-        if isinstance(pass_info, dict):
-            if pass_info.get("type", {}).get("name", "") == "Corner":
-                return "Cross"
-            if pass_info.get("cross", False):
-                return "Cross"
-        return "Pass"
-    return None
+from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates
 
 def apply_feature_engineering(df):
     # add team name as column
@@ -79,24 +29,44 @@ def apply_feature_engineering(df):
     df[['x', 'y']] = pd.DataFrame(df['location'].tolist(), index=df.index)
     df['x'] = pd.to_numeric(df['x'], errors='coerce')
     df['y'] = pd.to_numeric(df['y'], errors='coerce')
+    # on left wing (boolean, 1 if on left wing, 0 otherwise)
+    df['on_left_wing'] = ((df['x'] >= 90) & (df['y'] <= 18)).astype(int)
+    # on right wing (boolean, 1 if on right wing, 0 otherwise)
+    df['on_right_wing'] = ((df['x'] >= 90) & (df['y'] >= 62)).astype(int)
 
     # coordinates of opponent's goal (always at the same position)
     goal_x, goal_y = 120, 40
 
-    # features 1 and 2: distance and angle to opponent's goal
-    # distance to goal (euclidean distance)
+    # feature 1: distance to goal (euclidean distance)
     df['distance_to_goal'] = np.sqrt((goal_x - df['x'])**2 + (goal_y - df['y'])**2).round(2)
-    # angle to goal (in radians)
+    # feature 2: angle to goal (in radians)
     df['angle_to_goal'] = np.arctan2(goal_y - df['y'], goal_x - df['x']).round(2)
+    # feature 3: in box (boolean, 1 if in box, 0 otherwise)
+    df['in_box'] = ((df['x'] > 103.5) & (df['y'] > 20) & (df['y'] < 60)).astype(int)
+    # feature 4: in flank zone (boolean, 1 if in flank zone, 0 otherwise)
+    df['in_flank_zone'] = ((df['on_left_wing'] == 1) | (df['on_right_wing'] == 1)).astype(int)
 
     # feature 3: number of opponent players close to ball-carrier:
     df["nearby_opponents"] = df.apply(count_opponents_nearby, axis=1)
+    df['high_pressure'] = (df['nearby_opponents'] >= 3).astype(int)
+    df['low_pressure'] = (df['nearby_opponents'] == 0).astype(int)
     # feature 4: orientation of ball-carrier 
     df["orientation"] = df.apply(get_movement_angle, axis=1)
+    df['facing_goal'] = (df['orientation'] > 0.75).astype(int)  # Beispiel-Threshold, ggf. anpassen
+    # free teammates in frame
+    df['free_teammates'] = df.apply(count_free_teammates, axis=1)
+
 
     # time features
     df['time_seconds'] = df['minute'] * 60 + df['second']
     df['match_phase'] = df['minute'].apply(get_match_phase)
+    # late game (boolean, 1 if minute >= 80, 0 otherwise)
+    df['is_late_game'] = (df['minute'] >= 80).astype(int)
+     # score at minute
+    df['is_losing'] = df[['match_id', 'team_name', 'minute']].apply(
+        lambda row: get_score_status(df, row['match_id'], row['team_name'], row['minute']) == 1,
+        axis=1
+    ).astype(int)
 
     # possession features
     # possession change
@@ -105,47 +75,9 @@ def apply_feature_engineering(df):
     # contextual features
     df['prev_action_cat'] = df['action_cat'].shift(1)
     df['prev_event_success'] = df['event_success'].shift(1)
+    df['combo_depth'] = df.groupby('possession').cumcount()
 
     return df
 
-# function for feature 3
-def count_opponents_nearby(row, radius=10):
-    freeze = row.get("freeze_frame", [])
-    if not isinstance(freeze, list):
-        return np.nan
-    loc = row.get("location", [None, None])
-    if not (isinstance(loc, list) and None not in loc):
-        return np.nan
-    count = 0
-    for player in freeze:
-        if player.get("teammate") is False and isinstance(player.get("location"), list):
-            dx = player["location"][0] - loc[0]
-            dy = player["location"][1] - loc[1]
-            if np.sqrt(dx**2 + dy**2) <= radius:
-                count += 1
-    return count
 
-# function for feature 4
-def get_movement_angle(row):
-    start = row.get("location", [None, None])
-    end = None
 
-    if row["action_cat"] == "Dribble":
-        carry = row.get("carry", {})
-        if isinstance(carry, dict):
-            end = carry.get("end_location", [None, None])
-    elif row["action_cat"] == "Shot":
-        shot = row.get("shot", {})
-        if isinstance(shot, dict):
-            end = shot.get("end_location", [None, None])
-    elif row["action_cat"] == "Pass" or row["action_cat"] == "Cross":
-        pas = row.get("pass", {})
-        if isinstance(pas, dict):
-            end = pas.get("end_location", [None, None])
-
-    if (isinstance(start, list) and isinstance(end, list) and
-        len(start) == 2 and len(end) == 2 and None not in start and None not in end):
-        dx = end[0] - start[0]
-        dy = end[1] - start[1]
-        return np.arctan2(dy, dx)
-    return np.nan
