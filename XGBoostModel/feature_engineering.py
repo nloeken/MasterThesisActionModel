@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates
+from XGBoostModel.utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates
 
 def apply_feature_engineering(df):
     # add team name as column

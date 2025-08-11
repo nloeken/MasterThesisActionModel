@@ -176,21 +176,19 @@ def count_free_teammates(row, radius=5):
 
     return free_count
 
+# helper to plot SHAP values seperated by action classes
 def plot_shap_classwise(model, X_test, le_action):
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_test)
 
-    # Falls shap_values nur 2D ist, kein Multiclass
     if isinstance(shap_values, list):
-        # Liste: jede Klasse separat
         for i, class_name in enumerate(le_action.classes_):
             shap.summary_plot(shap_values[i], X_test, feature_names=X_test.columns, show=True)
     else:
-        # Single output
         shap.summary_plot(shap_values, X_test, feature_names=X_test.columns, show=True)
 
 
-# helper to plot SHAP values for regression models
+# helper to plot correlation matrix for features
 def plot_feature_correlations(df, feature_cols):
     corr_matrix = df[feature_cols].corr()
     plt.figure(figsize=(14, 10))

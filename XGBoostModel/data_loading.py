@@ -1,8 +1,8 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from config import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES
-from utils import extract_name
+from XGBoostModel.config import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES
+from XGBoostModel.utils import extract_name
 
 def load_and_merge():
     event_files = [f for f in os.listdir(EVENTS_DIR) if f.endswith('.json')]
