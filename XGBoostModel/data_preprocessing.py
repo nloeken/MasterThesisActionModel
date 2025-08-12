@@ -1,8 +1,8 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from XGBoostModel.config import MERGED_DIR
-from XGBoostModel.utils import safe_eval
+from config import MERGED_DIR
+from utils import safe_eval
 
 def load_and_preprocess():
     all_files = [os.path.join(MERGED_DIR, f) for f in os.listdir(MERGED_DIR) if f.endswith('.csv')]

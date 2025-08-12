@@ -1,10 +1,10 @@
-from XGBoostModel.data_loading import load_and_merge
-from XGBoostModel.data_preprocessing import load_and_preprocess
-from XGBoostModel.feature_engineering import apply_feature_engineering
-from XGBoostModel.model_training import train_model
-from XGBoostModel.model_evaluation import evaluate_model
-from XGBoostModel.config import COMBINED_FILE
-from XGBoostModel.config import SAMPLE_FILE
+from data_loading import load_and_merge
+from data_preprocessing import load_and_preprocess
+from feature_engineering import apply_feature_engineering
+from model_training import train_model
+from model_evaluation import evaluate_model
+from config import COMBINED_FILE
+from config import SAMPLE_FILE
 
 def main():
     #load_and_merge()

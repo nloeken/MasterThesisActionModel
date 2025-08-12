@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 # load merge, sort and filter (including only events with freeze_frame) data for specific match
-match_id = 3942819 # adjust match_id here 
-match_events_df = pd.read_json(f'/Users/nloeken/Desktop/Code/MasterThesis/open-data/data/events/{match_id}.json') # adjust path here
-match_360_df = pd.read_json(f'/Users/nloeken/Desktop/Code/MasterThesis/open-data/data/three-sixty/{match_id}.json') # adjust path here
+match_id =  3788741# adjust match_id here 
+match_events_df = pd.read_json(f'/Users/nloeken/Desktop/open-data/data/events/{match_id}.json') # adjust path here
+match_360_df = pd.read_json(f'/Users/nloeken/Desktop/open-data/data/three-sixty/{match_id}.json') # adjust path here
 df = pd.merge(left=match_events_df, right=match_360_df, left_on='id', right_on='event_uuid', how='inner')
 df = df.sort_values(by=['period', 'minute', 'second', 'index']).reset_index(drop=True)
 #df = df[df['freeze_frame'].notna()].reset_index(drop=True)
@@ -17,7 +17,7 @@ main_event_types = ['Half Start', 'Pass', 'Clearance', 'Carry', 'Duel', 'Dribble
 df = df[df['type'].apply(lambda x: x['name'] in main_event_types)].reset_index(drop=True)
 
 # optional filter: search for specific event (based on 'id')
-specific_event_id = "3500affe-2f95-4966-9c3f-61f8d473cdcf" # adjust specific_event_id here
+specific_event_id = "0" #"3500affe-2f95-4966-9c3f-61f8d473cdcf" # adjust specific_event_id here
 if specific_event_id in df['id'].values:
     initial_idx = df.index[df['id'] == specific_event_id][0]
 else:

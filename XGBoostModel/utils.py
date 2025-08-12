@@ -147,6 +147,7 @@ def event_success(row):
         return int(outcome in ["Won", "Success", "Success In Play", "Success Out"])
     return 0
 
+# TODO: Logik noch anpassen
 # helper to count free teammates
 def count_free_teammates(row, radius=5):
     freeze = row.get("freeze_frame", [])

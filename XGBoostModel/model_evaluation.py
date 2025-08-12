@@ -1,7 +1,7 @@
 from sklearn.metrics import classification_report, roc_auc_score
 import shap
 import matplotlib.pyplot as plt
-from XGBoostModel.utils import plot_shap_classwise, plot_feature_correlations, plot_xgb_importance
+from utils import plot_shap_classwise, plot_feature_correlations, plot_xgb_importance
 
 def evaluate_model(model_action, model_success, X_test, y_action_test, y_success_test, le_action):
     print("===== Prediction: next event =====")
