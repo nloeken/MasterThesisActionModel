@@ -204,6 +204,37 @@ def plot_xgb_importance(model, feature_names, max_features=20):
     plt.title("XGBoost Feature Importance")
     plt.show()
 
+# helper to get last n events as features
+def get_last_n_events(df, n=3):
+    for i in range(1, n+1):
+        df[f'last_{i}_action_cat'] = df.groupby('match_id')['action_cat'].shift(i)
+    return df
+
+# helper to get time since last event   
+def get_time_since_last_event(df):
+    df['time_seconds_abs'] = df['minute'] * 60 + df['second']
+    df['time_since_last_event'] = df.groupby('match_id')['time_seconds_abs'].diff().fillna(0)
+    return df
+
+# helper to get progress towards goal
+def get_progress_to_goal(df):
+    goal_x = 120
+    df['start_possession_x'] = df.groupby('possession')['x'].transform('first')
+    df['progress_to_goal'] = df['start_possession_x'] - df['x']  # positiver Wert = Richtung Tor
+    return df
+
+# helper to get (repeating)action patterns
+def get_action_patterns(df, n=3):
+    df = get_last_n_events(df, n)
+    last_cols = [f'last_{i}_action_cat' for i in range(1, n+1)]
+    df['action_pattern'] = df[last_cols].astype(str).agg('-'.join, axis=1)
+    return df
+
+
+
+
+
+
 
 
 

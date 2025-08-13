@@ -26,12 +26,12 @@ def load_and_merge():
             df["player_name"] = df["player"].apply(extract_name)
             df["team_name"] = df["possession_team"].apply(extract_name)
             df["match_id"] = match_id
+            df["position_name"] = df["position"].apply(extract_name)
 
             df = df[df['type_name'].isin(MAIN_EVENT_TYPES)].reset_index(drop=True)
 
             keep_cols = [
-                "id", "index", "period", "minute", "second", "duration", "type", "type_name",
-                "team", "team_name", "possession", "possession_team", "player", "player_name", "location", "pass",
+                "id", "index", "period", "minute", "second", "duration", "type", "type_name", "team", "team_name", "position", "position_name", "possession", "possession_team", "player", "player_name", "location", "pass",
                 "carry", "dribble", "shot", "duel", "clearance", "freeze_frame", "match_id"
             ]
             df = df[[col for col in keep_cols if col in df.columns]]

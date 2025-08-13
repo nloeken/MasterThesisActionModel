@@ -1,11 +1,16 @@
 import numpy as np
 import pandas as pd
-from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates
+from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates, get_last_n_events, get_time_since_last_event, get_progress_to_goal, get_action_patterns
+from config import MAX_EVENT_GAP
 
 def apply_feature_engineering(df):
     # add team name as column
     df['team'] = df['team'].apply(safe_eval)
     df['team_name'] = df['team'].apply(lambda x: x.get('name') if isinstance(x, dict) else x if isinstance(x, str) else None)
+
+    # add position name as column
+    df['position'] = df['position'].apply(safe_eval)
+    df['position_name'] = df['position'].apply(lambda x: x.get('name') if isinstance(x, dict) else x if isinstance(x, str) else None)
 
     # extract action categories and event success
     df["action_cat"] = df.apply(get_action_cat, axis=1)
@@ -46,11 +51,11 @@ def apply_feature_engineering(df):
     # feature 4: in flank zone (boolean, 1 if in flank zone, 0 otherwise)
     df['in_flank_zone'] = ((df['on_left_wing'] == 1) | (df['on_right_wing'] == 1)).astype(int)
 
-    # feature 3: number of opponent players close to ball-carrier:
+    # feature 5: number of opponent players close to ball-carrier:
     df["nearby_opponents"] = df.apply(count_opponents_nearby, axis=1)
     df['high_pressure'] = (df['nearby_opponents'] >= 3).astype(int)
     df['low_pressure'] = (df['nearby_opponents'] == 0).astype(int)
-    # feature 4: orientation of ball-carrier 
+    # feature 6: orientation of ball-carrier
     df["orientation"] = df.apply(get_movement_angle, axis=1)
     df['facing_goal'] = (df['orientation'] > 0.75).astype(int)  # Beispiel-Threshold, ggf. anpassen
     # free teammates in frame
@@ -75,7 +80,13 @@ def apply_feature_engineering(df):
     # contextual features
     df['prev_action_cat'] = df['action_cat'].shift(1)
     df['prev_event_success'] = df['event_success'].shift(1)
-    df['combo_depth'] = df.groupby('possession').cumcount()
+    df['combo_depth'] = df.groupby('possession').cumcount() 
+    df = get_last_n_events(df, n=3)
+    df = get_time_since_last_event(df)
+    # filter out sequences with a long time since last event
+    df = df[df['time_since_last_event'] <= MAX_EVENT_GAP]
+    df = get_progress_to_goal(df)
+    df = get_action_patterns(df, n=3)
 
     return df
 
