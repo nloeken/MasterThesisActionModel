@@ -1,28 +1,30 @@
-from sklearn.metrics import classification_report, roc_auc_score
-import shap
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
 import matplotlib.pyplot as plt
-from utils import plot_shap_classwise, plot_feature_correlations, plot_xgb_importance
+import seaborn as sns
 
-def evaluate_model(model_action, model_success, X_test, y_action_test, y_success_test, le_action):
-    print("===== Prediction: next event =====")
-    y_action_pred = model_action.predict(X_test)
-    print(classification_report(y_action_test, y_action_pred, target_names=le_action.classes_))
+def evaluate_model(model_action, model_success, X_model1_test, X_model2_test, y_model1_test, y_model2_test, le_action):
+    # --- Modell 1: Next Action Category ---
+    y_pred_action = model_action.predict(X_model1_test)
 
-    print("===== Prediction: success of event =====")
-    y_success_pred = model_success.predict(X_test)
-    print(classification_report(y_success_test, y_success_pred))
-    print(f"ROC-AUC: {roc_auc_score(y_success_test, model_success.predict_proba(X_test)[:, 1]):.3f}")
+    print("=== Model 1: Next Action Category ===")
+    print("Accuracy:", accuracy_score(y_model1_test, y_pred_action))
+    print("F1 Score (weighted):", f1_score(y_model1_test, y_pred_action, average='weighted'))
+    print(classification_report(y_model1_test, y_pred_action, target_names=le_action.classes_))
 
-    # SHAP-analysis
-    explainer_action = shap.TreeExplainer(model_action)
-    shap_values_action = explainer_action.shap_values(X_test)
-    shap.summary_plot(shap_values_action, X_test, feature_names=X_test.columns)
+    # Confusion Matrix
+    cm = confusion_matrix(y_model1_test, y_pred_action)
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                xticklabels=le_action.classes_, yticklabels=le_action.classes_)
+    plt.title("Confusion Matrix – Next Action Category")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.show()
 
-    # SHAP per class
-    plot_shap_classwise(model_action, X_test, le_action)
+    # --- Modell 2: Success Probability ---
+    y_pred_success = model_success.predict(X_model2_test)
 
-    # Feature correlations
-    plot_feature_correlations(X_test, X_test.columns)
-
-    # Feature importance
-    plot_xgb_importance(model_action, X_test.columns)
+    print("\n=== Model 2: Success Probability ===")
+    print("Accuracy:", accuracy_score(y_model2_test, y_pred_success))
+    print("F1 Score (weighted):", f1_score(y_model2_test, y_pred_success, average='weighted'))
+    print(classification_report(y_model2_test, y_pred_success))

@@ -199,30 +199,27 @@ def plot_feature_correlations(df, feature_cols):
     plt.show()
 
 # helper to plot XGBoost feature importance
-def plot_xgb_importance(model, feature_names, max_features=30):
+def plot_xgb_importance(model, feature_names, max_features=40):
     xgb.plot_importance(model, max_num_features=max_features, importance_type='gain')
     plt.title("XGBoost Feature Importance")
     plt.show()
-    
-# helper to get time since last event   
-def get_time_since_last_event(df):
-    df['time_seconds_abs'] = df['minute'] * 60 + df['second']
-    df['time_since_last_event'] = df.groupby('match_id')['time_seconds_abs'].diff().fillna(0)
-    return df
 
-# helper to get progress towards goal
-def get_progress_to_goal(df):
-    goal_x = 120
-    df['start_possession_x'] = df.groupby('possession')['x'].transform('first')
-    df['progress_to_goal'] = df['start_possession_x'] - df['x'] 
-    return df
-
-
-
-
-
-
-
+# helper to get last n events as one-hot sequence
+def get_last_n_events(df, n=3):
+        # define action categories for one-hot encoding
+        action_categories = ['Pass', 'Cross', 'Dribble', 'Shot']
+        
+        # create columns for last n events
+        for i in range(1, n+1):
+            # get the action category of the i-th previous event
+            prev_action = df.groupby('match_id')['action_cat'].shift(i)
+            
+            # create one-hot encoding for each action category
+            for action in action_categories:
+                col_name = f'last_{i}_event_{action.lower()}'
+                df[col_name] = (prev_action == action).astype(int)
+        
+        return df
 
 
 
