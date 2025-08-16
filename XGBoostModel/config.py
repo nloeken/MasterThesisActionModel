@@ -7,6 +7,8 @@ THREE_SIXTY_DIR = os.path.join(BASE_DIR, 'data/three-sixty/')
 MERGED_DIR = os.path.join(BASE_DIR, 'merged/')
 COMBINED_FILE = os.path.join(BASE_DIR, 'combined/combined_all.csv')
 SAMPLE_FILE = os.path.join(BASE_DIR, 'combined/combined_sample.csv')
+PREDICTION_FILE = os.path.join(BASE_DIR, 'predictions/predictions.csv')
+SAMPLE_PREDICTION_FILE = os.path.join(BASE_DIR, 'predictions/sample_predictions.csv')
 
 # Constants
 MAX_EVENT_GAP = 10  # in seconds, adjust threshold here

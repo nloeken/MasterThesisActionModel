@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
 
+# helper to extract name from nested dictionary
 def extract_name(field):
     if isinstance(field, dict):
         return field.get("name")
     return field
 
-# helper to get JSON-like strings from CSV
+# helper to get JSON-like strings from csv
 def safe_eval(x):
     if isinstance(x, str):
         try:

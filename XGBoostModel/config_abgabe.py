@@ -1,5 +1,5 @@
 import os
-# noch anzupassen, um hardcoded Pfade zu vermeiden
+# noch anzupassen (hardoding umgehen)
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

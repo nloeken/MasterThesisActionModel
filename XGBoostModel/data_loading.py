@@ -11,33 +11,42 @@ def load_and_merge():
     for match_id in tqdm(match_ids, desc="Processing matches"):
         try:
             events_path = os.path.join(EVENTS_DIR, f'{match_id}.json')
-            context_path = os.path.join(THREE_SIXTY_DIR, f'{match_id}.json')
+            positional_path = os.path.join(THREE_SIXTY_DIR, f'{match_id}.json')
 
-            if not os.path.exists(context_path):
+            # Skip matches only having event data
+            if not os.path.exists(positional_path):
                 print(f"[{match_id}] No 360-file found. Skipped.")
                 continue
 
             events_df = pd.read_json(events_path)
-            context_df = pd.read_json(context_path)
+            positional_df = pd.read_json(positional_path)
 
-            df = pd.merge(events_df, context_df, left_on='id', right_on='event_uuid', how='inner')
+            # merge the event and positional df
+            df = pd.merge(events_df, positional_df, left_on='id', right_on='event_uuid', how='inner')
 
+            # extract and store names seperately
             df["type_name"] = df["type"].apply(extract_name)
             df["player_name"] = df["player"].apply(extract_name)
             df["team_name"] = df["possession_team"].apply(extract_name)
-            df["match_id"] = match_id
             df["position_name"] = df["position"].apply(extract_name)
 
+            # add column match_id
+            df["match_id"] = match_id
+            
+            # filter: only keep events from main event types
             df = df[df['type_name'].isin(MAIN_EVENT_TYPES)].reset_index(drop=True)
 
+            # only keep needed columns
             keep_cols = [
                 "id", "index", "period", "minute", "second", "duration", "type", "type_name", "team", "team_name", "position", "position_name", "possession", "possession_team", "player", "player_name", "location", "pass",
                 "carry", "dribble", "shot", "duel", "clearance", "freeze_frame", "match_id"
             ]
             df = df[[col for col in keep_cols if col in df.columns]]
             
+            # sort time-wise
             df = df.sort_values(by=['period', 'minute', 'second', 'index']).reset_index(drop=True)
 
+            # save merged df as csv
             out_path = os.path.join(MERGED_DIR, f"contextualevents_{match_id}.csv")
             df.to_csv(out_path, index=False)
             print(f"[{match_id}] saved at {out_path}")

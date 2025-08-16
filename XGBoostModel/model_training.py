@@ -86,4 +86,4 @@ def train_model(df):
     model2 = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss')
     model2.fit(X_model2_train, y_model2_train, sample_weight=sample_weights_success)
 
-    return model1, model2, X_model1_test, X_model2_test, y_model1_test, y_model2_test, le_action
+    return model1, model2, X_model1_test, X_model2_test, y_model1_test, y_model2_test, le_action, df
