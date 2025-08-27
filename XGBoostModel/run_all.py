@@ -23,7 +23,7 @@ def main():
         df.head(50).to_csv(SAMPLE_FILE, index=False)
         print(f"Saved sample dataset for fast inspection at {SAMPLE_FILE}")
 
-    # Option 2: Full processing (uncomment if you want fresh data)
+    # Option 2: Full processing
     #load_and_merge()
     # df = preprocess()
     # df = apply_feature_engineering(df)

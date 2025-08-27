@@ -46,12 +46,11 @@ XGBOOST/
 ```bash
 git clone https://github.com/nloeken/xgboost.git
 ```
-### 2. Set up a virtual environment
+### 2. Set up a Conda environment
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate         # macOS/Linux
-# .venv\Scripts\activate          # Windows
+conda create -n <name> python=3.11
+conda activate <name>
 ```
 
 ### 3. Install dependencies
