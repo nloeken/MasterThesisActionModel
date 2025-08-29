@@ -1,32 +1,30 @@
 import xgboost as xgb
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, RandomizedSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_sample_weight
 
-def train_model(df):
-    # label encoding
+def train_models(df):
+
+    # label encoding for targets
     le_action = LabelEncoder()
-    df['action_cat_enc'] = le_action.fit_transform(df['action_cat'].astype(str))
-    df['next_action_cat_enc'] = le_action.transform(df['next_action_cat'].astype(str))
-    df['prev_action_cat_enc'] = df.groupby('match_id')['action_cat_enc'].shift(1)
-
-    le_team = LabelEncoder()
-    df['team_name_enc'] = le_team.fit_transform(df['team_name'].astype(str))
+    df['next_action_cat_enc'] = le_action.fit_transform(df['next_action_cat'].astype(str))
     
-    le_position = LabelEncoder()
-    df['position_name_enc'] = le_position.fit_transform(df['position_name'].astype(str))
-
-    # one-hot encoding
-    df = pd.get_dummies(df, columns=['match_phase', 'period'], prefix=['phase', 'half'])
-
+    # one-hot encoding for feature categories
+    df = pd.get_dummies(
+        df,
+        columns=['action_cat', 'prev_action_cat', 'team_name', 'position_name', 'match_phase', 'period'],
+        prefix=['cur_act', 'prev_act', 'team', 'pos', 'phase', 'half']
+    )
     # all features 
     base_features = [
-        'x', 'y', 'distance_to_goal', 'angle_to_goal', 'in_box', 'in_cross_zone', 
-        'nearby_opponents', 'high_pressure', 'low_pressure', 'orientation', 'free_teammates', 'position_name_enc',
-        'time_seconds', 'is_late_game', 'is_losing', 'duration', 'possession_change', 'action_cat_enc',
-        'team_name_enc', 'prev_action_cat_enc', 'prev_event_success', 'combo_depth', 
-    ] + [col for col in df.columns if col.startswith('phase_')]
+            'x', 'y', 'distance_to_goal', 'angle_to_goal', 'in_box', 'in_cross_zone', 
+            'nearby_opponents', 'high_pressure', 'low_pressure', 'orientation', 'free_teammates',
+            'time_seconds', 'is_late_game', 'is_losing', 'duration', 'possession_change',
+            'prev_event_success', 'combo_depth',
+        ] + [col for col in df.columns if col.startswith(('cur_act_', 'prev_act_', 'team_',
+            'pos_', 'phase_', 'half_'))]
+
 
     # Filter out features that don't exist in the dataframe
     available_features = []
@@ -43,7 +41,7 @@ def train_model(df):
     if 'event_success' not in model1_features and 'event_success' in df.columns:
         model1_features.append('event_success')
 
-    # Model 2 features: base features (action_cat_enc already in base_features)
+    # Model 2 features: base features
     model2_features = base_features.copy()
     
     print(f"Model 1 features: {len(model1_features)} features")
@@ -58,6 +56,7 @@ def train_model(df):
     X_model1 = X_model1[mask1]
     y_model1 = y_model1[mask1]
     
+    # Train/Test Split
     X_model1_train, X_model1_test, y_model1_train, y_model1_test = train_test_split(
         X_model1, y_model1, test_size=0.2, random_state=42, stratify=y_model1
     )
@@ -70,7 +69,8 @@ def train_model(df):
     mask2 = ~y_model2.isna()
     X_model2 = X_model2[mask2]
     y_model2 = y_model2[mask2]
-    
+
+    # Train/Test Split
     X_model2_train, X_model2_test, y_model2_train, y_model2_test = train_test_split(
         X_model2, y_model2, test_size=0.2, random_state=42, stratify=y_model2
     )  
