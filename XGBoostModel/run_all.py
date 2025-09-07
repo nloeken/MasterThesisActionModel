@@ -25,12 +25,12 @@ def main():
 
     # Option 2: Full processing
     #load_and_merge()
-    # df = preprocess()
-    # df = apply_feature_engineering(df)
-    # df.to_csv(COMBINED_FILE, index=False)
-    # print(f"Saved full dataset at {COMBINED_FILE}")
-    # df.head(50).to_csv(SAMPLE_FILE, index=False)
-    # print(f"Saved sample dataset for fast inspection at {SAMPLE_FILE}")
+    #df = preprocess()
+    #df = apply_feature_engineering(df)
+    #df.to_csv(COMBINED_FILE, index=False)
+    #print(f"Saved full dataset at {COMBINED_FILE}")
+    #df.head(50).to_csv(SAMPLE_FILE, index=False)
+    #print(f"Saved sample dataset for fast inspection at {SAMPLE_FILE}")
 
     # model training
     model_action, model_success, X_model1_test, X_model2_test, y_model1_test, y_model2_test, le_action, df = train_models(df)
