@@ -6,6 +6,7 @@ from utils import extract_name
 
 # function to sequentially load and merge event and positional data
 def load_and_merge():
+    
     event_files = [f for f in os.listdir(EVENTS_DIR) if f.endswith('.json')]
     match_ids = [os.path.splitext(f)[0] for f in event_files]
     meta_info = []

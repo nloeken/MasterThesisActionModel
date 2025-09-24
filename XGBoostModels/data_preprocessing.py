@@ -6,6 +6,7 @@ from utils import safe_eval
 
 # function to load merged data file and preprocess for feature engineering
 def preprocess():
+    
     all_files = [os.path.join(MERGED_DIR, f) for f in os.listdir(MERGED_DIR) if f.endswith('.csv')]
     dfs = []
 
