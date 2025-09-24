@@ -26,7 +26,7 @@ def train_models(df):
         'x', 'y', 'distance_to_goal', 'angle_to_goal', 'in_box', 'in_cross_zone',
         'nearby_opponents', 'high_pressure', 'low_pressure', 'orientation',
         'free_teammates', 'time_seconds', 'is_late_game', 'is_losing',
-        'duration', 'possession_change', 'prev_event_success', 'combo_depth',
+        'duration', 'possession_change', 'prev_event_success', 'combo_depth', 'progress_to_goal',
     ] + [col for col in df.columns if col.startswith(('cur_act_', 'prev_act_', 'team_', 'pos_', 'phase_', 'half_'))]
     
     """
@@ -35,7 +35,7 @@ def train_models(df):
         'x', 'y', 'distance_to_goal', 'angle_to_goal', 'in_box', 'in_cross_zone',
         'nearby_opponents', 'high_pressure', 'low_pressure', 'orientation',
         'free_teammates', 'is_late_game', 'is_losing',
-        'duration', 'prev_event_success',
+        'duration', 'possession_duration', 'prev_event_success',
     ] + [col for col in df.columns if col.startswith(('cur_act_', 'prev_act_', 'team_', 'pos_', 'phase_', 'half_'))]
 
     available_features = [f for f in base_features if f in df.columns]
@@ -51,8 +51,10 @@ def train_models(df):
         test_size=0.2, random_state=42, stratify=y_action
     )
 
+    # hyperparameter tuning with randomized search
     # cross validation setup
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    # f1 scorer as metric
     f1_scorer = make_scorer(f1_score, average="weighted")
 
     # hyperparameter search space
@@ -89,7 +91,7 @@ def train_models(df):
     search1 = RandomizedSearchCV(
         estimator=model1,
         param_distributions=param_dist,
-        n_iter=20,  
+        n_iter=10,  
         scoring=f1_scorer,
         cv=cv,
         verbose=2,
@@ -109,7 +111,7 @@ def train_models(df):
     search2 = RandomizedSearchCV(
         estimator=model2,
         param_distributions=param_dist,
-        n_iter=20,
+        n_iter=10,
         scoring=f1_scorer,
         cv=cv,
         verbose=2,
@@ -128,7 +130,7 @@ def train_models(df):
     search3 = RandomizedSearchCV(
         estimator=model3,
         param_distributions=param_dist,
-        n_iter=20,
+        n_iter=10,
         scoring=f1_scorer,
         cv=cv,
         verbose=2,
@@ -139,6 +141,7 @@ def train_models(df):
     print("\n===== Hyperparameter-Tuning: Model 3 (Next Zone) =====")
     best_model3 = fit_xgb(search3, X_train, y_zone_train)
 
+    # return trained models, test sets, label encoder and dataframe with predictions
     return (
         best_model1, best_model2, best_model3,
         X_test, y_action_test, y_success_test, y_zone_test,

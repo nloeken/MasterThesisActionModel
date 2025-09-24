@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 # load merge, sort and filter (including only events with freeze_frame) data for specific match
-match_id =  3788741# adjust match_id here 
+match_id =  3788741 # adjust match_id here 
 match_events_df = pd.read_json(f'/Users/nloeken/Desktop/open-data/data/events/{match_id}.json') # adjust path here
 match_360_df = pd.read_json(f'/Users/nloeken/Desktop/open-data/data/three-sixty/{match_id}.json') # adjust path here
 df = pd.merge(left=match_events_df, right=match_360_df, left_on='id', right_on='event_uuid', how='inner')

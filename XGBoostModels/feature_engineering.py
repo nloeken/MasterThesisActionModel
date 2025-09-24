@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates, get_time_since_last_event, get_progress_to_goal
+from utils import safe_location, get_match_phase, safe_eval, get_score_status, get_movement_angle, count_opponents_nearby, get_action_cat, event_success, count_free_teammates, get_time_since_last_event, get_progress_to_goal, assign_fuzzy_zone
 
 # function to apply feature engineering to the preprocessed dataframe
 def apply_feature_engineering(df):
 
     # add team name as column
-    df['team'] = df['team'].apply(safe_eval)
-    df['team_name'] = df['team'].apply(lambda x: x.get('name') if isinstance(x, dict) else x if isinstance(x, str) else None)
+    #df['team'] = df['team'].apply(safe_eval)
+    #df['team_name'] = df['team'].apply(lambda x: x.get('name') if isinstance(x, dict) else x if isinstance(x, str) else None)
 
     # extract action categories and event success
     df["action_cat"] = df.apply(get_action_cat, axis=1)
@@ -25,16 +25,9 @@ def apply_feature_engineering(df):
     # feature 2: y coordinate
     df['y'] = pd.to_numeric(df['y'], errors='coerce')
 
-    # split into zones (5x4 grid = 20 zones)
-    def assign_zone(x, y):
-        if pd.isna(x) or pd.isna(y):
-            return np.nan
-        col = int(min(x // (120/5), 4))
-        row = int(min(y // (80/4), 3))
-        return row * 5 + col
-
     # feature 3: zone (0-19)
-    df['zone'] = df.apply(lambda r: assign_zone(r['x'], r['y']), axis=1)
+    #alt: df['zone'] = df.apply(lambda r: assign_zone(r['x'], r['y']), axis=1)
+    df['zone'] = assign_fuzzy_zone(df, x_col='x', y_col='y')
 
     # positions relative to the field
     # coordinates of opponent's goal (always at the same position)
@@ -89,6 +82,8 @@ def apply_feature_engineering(df):
     df['combo_depth'] = df.groupby('possession').cumcount()
     # feature 21: duration of event
     df['duration'] = df['duration'].round(2)
+    #Neu: Duration of possession:
+    df['possession_duration'] = df.groupby('possession')['duration'].cumsum().round(2)
     # feature 22: time since last event
     df = get_time_since_last_event(df)
     # feature 23: progress to goal (distance to goal relative to distance at start of possession)

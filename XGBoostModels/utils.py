@@ -1,9 +1,11 @@
 import ast
 import numpy as np
+import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
+from config import centroid_x_100, centroid_y_100
 
 # helper to extract name from nested dictionary
 def extract_name(field):
@@ -78,7 +80,7 @@ def get_movement_angle(row):
         len(start) == 2 and len(end) == 2 and None not in start and None not in end):
         dx = end[0] - start[0]
         dy = end[1] - start[1]
-        return np.arctan2(dy, dx)
+        return np.arctan2(dy, dx).round(3)
     return np.nan
 
 # helper to count opponents nearby
@@ -150,7 +152,10 @@ def event_success(row):
 
 # TODO: Logik noch anpassen
 # helper to count free teammates
-def count_free_teammates(row, radius=5):
+import numpy as np
+
+# helper to count free teammates
+def count_free_teammates(row, radius=2):
     freeze = row.get("freeze_frame", [])
     ball_location = row.get("location", [None, None])
     
@@ -162,8 +167,8 @@ def count_free_teammates(row, radius=5):
     for player in freeze:
         if player.get("teammate") and isinstance(player.get("location"), list):
             teammate_loc = player["location"]
-            is_marked = False
 
+            is_marked = False
             for opponent in freeze:
                 if not opponent.get("teammate") and isinstance(opponent.get("location"), list):
                     dx = opponent["location"][0] - teammate_loc[0]
@@ -177,6 +182,7 @@ def count_free_teammates(row, radius=5):
                 free_count += 1
 
     return free_count
+
 
 # helper to plot SHAP values seperated by action classes
 def plot_shap_classwise(model, X_test, le_action):
@@ -211,13 +217,56 @@ def get_time_since_last_event(df):
     df['time_since_last_event'] = df.groupby('match_id')['time_seconds_abs'].diff().fillna(0)
     return df
 
+#noch anpassen?
 # helper to get progress towards goal
 def get_progress_to_goal(df):
     goal_x = 120
     df['start_possession_x'] = df.groupby('possession')['x'].transform('first')
-    df['progress_to_goal'] = df['start_possession_x'] - df['x'] 
+    df['progress_to_goal'] = - df['x'] - df['start_possession_x']
+    df['progress_to_goal'].round(2)
     return df
 
+def assign_fuzzy_zone(df, x_col='x', y_col='y'):
+    
+    # Skaliere die Zentren auf eine Spielfeldgröße von 105x68 Metern
+    centroid_x = [x * 1.05 for x in centroid_x_100]
+    centroid_y = [y * 0.68 for y in centroid_y_100]
+    
+    # Leere DataFrames für Distanzen und Zugehörigkeitsgrade erstellen
+    dist_df = pd.DataFrame(index=df.index)
+    degree_df = pd.DataFrame(index=df.index)
+
+    # 2. Berechne die Distanz zu allen Zentren
+    for i in range(20):
+        dist_df[f'zone_dist_{i}'] = np.sqrt(
+            (df[x_col] - centroid_x[i])**2 + 
+            (df[y_col] - centroid_y[i])**2
+        )
+    
+    # 3. Berechne die "Fuzzy"-Zugehörigkeit (Degree)
+    # Um Division durch Null zu vermeiden, ersetzen wir 0-Distanzen durch einen sehr kleinen Wert
+    dist_df.replace(0, 1e-9, inplace=True)
+    
+    for i in range(20):
+        sum_of_ratios = 0
+        for j in range(20):
+            sum_of_ratios += (dist_df[f'zone_dist_{i}'] / dist_df[f'zone_dist_{j}'])**2
+        degree_df[f'zone_degree_{i}'] = 1 / sum_of_ratios
+
+    # 4. Weise die endgültige Zone zu (Hard Label)
+    zone_series = degree_df.idxmax(axis=1).str.replace('zone_degree_', '').astype(int)
+    
+    return zone_series
+"""
+#alt:
+   def assign_zone(x, y):
+        if pd.isna(x) or pd.isna(y):
+            return np.nan
+        col = int(min(x // (120/5), 4))
+        row = int(min(y // (80/4), 3))
+        return row * 5 + col
+"""
+ 
 
 
 

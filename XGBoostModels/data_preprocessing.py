@@ -9,7 +9,7 @@ def preprocess():
     all_files = [os.path.join(MERGED_DIR, f) for f in os.listdir(MERGED_DIR) if f.endswith('.csv')]
     dfs = []
 
-    for file in tqdm(all_files, desc="Loading match files"):
+    for file in tqdm(all_files, desc="Loading merged match files"):
         df = pd.read_csv(file)
         for col in ["type", "pass", "clearance", "half start", "shot", "50/50", "carry", "dribble", "duel", "freeze_frame"]:
             if col in df.columns:

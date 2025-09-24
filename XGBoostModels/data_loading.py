@@ -1,13 +1,14 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from config import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES
+from config import EVENTS_DIR, THREE_SIXTY_DIR, MERGED_DIR, MAIN_EVENT_TYPES, META_DIR
 from utils import extract_name
 
 # function to sequentially load and merge event and positional data
 def load_and_merge():
     event_files = [f for f in os.listdir(EVENTS_DIR) if f.endswith('.json')]
     match_ids = [os.path.splitext(f)[0] for f in event_files]
+    meta_info = []
 
     for match_id in tqdm(match_ids, desc="Processing matches"):
         try:
@@ -16,11 +17,24 @@ def load_and_merge():
 
             # skip matches only having event data
             if not os.path.exists(positional_path):
-                print(f"[{match_id}] No 360-file found. Skipped.")
                 continue
 
             events_df = pd.read_json(events_path)
             positional_df = pd.read_json(positional_path)
+
+            # For exploratory purposes, extract team names from Starting XI event
+            starting_xi = events_df[events_df['type'].apply(lambda x: x['name']) == 'Starting XI'].reset_index(drop=True)
+            if len(starting_xi) >= 2:
+                team_1_name = starting_xi.loc[0, 'team']['name']
+                team_2_name = starting_xi.loc[1, 'team']['name']
+            else:
+                team_1_name, team_2_name = "unknown", "unknown"
+
+            meta_info.append({
+                "match_id": match_id,
+                "team_1": team_1_name,
+                "team_2": team_2_name
+            })
 
             # merge the event and positional df
             df = pd.merge(
@@ -66,3 +80,11 @@ def load_and_merge():
 
         except Exception as e:
             print(f"[{match_id}] Error: {e}")
+
+    # save meta info as csv
+    if meta_info:
+        meta_df = pd.DataFrame(meta_info)
+        os.makedirs(META_DIR, exist_ok=True)
+        meta_out = os.path.join(META_DIR, "matches_overview.csv")
+        meta_df.to_csv(meta_out, index=False)
+        print(f"Übersicht gespeichert unter: {meta_out}")
