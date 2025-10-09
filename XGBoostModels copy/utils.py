@@ -5,6 +5,7 @@ import shap
 import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
+from tqdm import tqdm
 from config import centroid_x_100, centroid_y_100
 
 # helper to extract name from nested dictionary
@@ -119,37 +120,6 @@ def get_action_cat(row):
         return "Pass"
     return None
 
-# helper for success estimation (for diffferent event types) 
-def event_success(row):
-    # Pass event types:
-    if row["type_name"] == "Pass":
-        outcome = row.get("pass", {}).get("outcome", {}).get("name", "")
-        return int(outcome not in ["Incomplete", "Out"])
-    if row["type_name"] == "Clearance":
-        outcome = row.get("clearance", {}).get("outcome", {}).get("name", "")
-        return 1
-    if row["type_name"] == "Half Start":
-        outcome = row.get("half start", {}).get("outcome", {}).get("name", "")
-        return 1
-    # Shot event types:
-    if row["type_name"] == "Shot":
-        outcome = row.get("shot", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Goal", "Post", "Saved", "Saved To Post"])
-    # Dribble event types:
-    if row["type_name"] == "50/50":
-        outcome = row.get("50/50", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Won", "Success To Team"])
-    if row["type_name"] == "Carry":
-        outcome = row.get("carry", {}).get("outcome", {}).get("name", "")
-        return 1
-    if row["type_name"] == "Dribble":
-        outcome = row.get("dribble", {}).get("outcome", {}).get("name", "")
-        return int(outcome == "Complete")
-    if row["type_name"] == "Duel":
-        outcome = row.get("duel", {}).get("outcome", {}).get("name", "")
-        return int(outcome in ["Won", "Success", "Success In Play", "Success Out"])
-    return 0
-
 # TODO: Logik noch anpassen
 # helper to count free teammates
 import numpy as np
@@ -245,7 +215,6 @@ def add_possession_end_event(df):
     df = df.sort_values(by=['match_id', 'period', 'time_seconds']).reset_index(drop=True)
     return df
 
-
 #noch anpassen?
 # helper to get progress towards goal
 def get_progress_to_goal(df):
@@ -286,6 +255,81 @@ def assign_fuzzy_zone(df, x_col='x', y_col='y'):
     zone_series = degree_df.idxmax(axis=1).str.replace('zone_degree_', '').astype(int)
     
     return zone_series
+
+# helper to add "possession_end" event category
+def add_possession_end_event(df):
+    end_possession_rows = []
+    
+    # Temporäre Zeitspalte für Sortierung
+    df['time_seconds_temp'] = df['minute'] * 60 + df['second']
+    
+    df = df.sort_values(by=['match_id', 'possession', 'time_seconds_temp'])
+    
+    for _, group in tqdm(df.groupby(['match_id', 'possession']), desc="Adding Possession End events"):
+        if group.empty:
+            continue
+            
+        last_event = group.iloc[-1].copy()
+        
+        # Zeitstempel leicht erhöhen, damit es nach dem letzten Event kommt
+        last_event['time_seconds_temp'] += 0.01
+        
+        # Neue Event-Eigenschaften setzen
+        last_event['type_name'] = 'Possession End'
+        last_event['duration'] = 0.0
+        # event_success wird später für alle Events neu berechnet
+        
+        # Event-spezifische Spalten leeren
+        event_specific_cols = ['pass', 'carry', 'dribble', 'shot', 'duel', 'clearance', 'freeze_frame', '50/50', 'half start']
+        for col in event_specific_cols:
+            if col in last_event.index:
+                last_event[col] = np.nan
+
+        end_possession_rows.append(last_event)
+
+    if end_possession_rows:
+        end_rows_df = pd.DataFrame(end_possession_rows)
+        df = pd.concat([df, end_rows_df], ignore_index=True)
+    
+    # Neu sortieren und temporäre Spalte entfernen
+    df = df.sort_values(by=['match_id', 'period', 'time_seconds_temp']).reset_index(drop=True)
+    df.drop(columns=['time_seconds_temp'], inplace=True)
+    
+    return df
+
+"""
+# old: helper for success estimation (for diffferent event types) 
+def event_success(row):
+    # Pass event types:
+    if row["type_name"] == "Pass":
+        outcome = row.get("pass", {}).get("outcome", {}).get("name", "")
+        return int(outcome not in ["Incomplete", "Out"])
+    if row["type_name"] == "Clearance":
+        outcome = row.get("clearance", {}).get("outcome", {}).get("name", "")
+        return 1
+    if row["type_name"] == "Half Start":
+        outcome = row.get("half start", {}).get("outcome", {}).get("name", "")
+        return 1
+    # Shot event types:
+    if row["type_name"] == "Shot":
+        outcome = row.get("shot", {}).get("outcome", {}).get("name", "")
+        return int(outcome in ["Goal", "Post", "Saved", "Saved To Post"])
+    # Dribble event types:
+    if row["type_name"] == "50/50":
+        outcome = row.get("50/50", {}).get("outcome", {}).get("name", "")
+        return int(outcome in ["Won", "Success To Team"])
+    if row["type_name"] == "Carry":
+        outcome = row.get("carry", {}).get("outcome", {}).get("name", "")
+        return 1
+    if row["type_name"] == "Dribble":
+        outcome = row.get("dribble", {}).get("outcome", {}).get("name", "")
+        return int(outcome == "Complete")
+    if row["type_name"] == "Duel":
+        outcome = row.get("duel", {}).get("outcome", {}).get("name", "")
+        return int(outcome in ["Won", "Success", "Success In Play", "Success Out"])
+    return 0
+"""
+
 """
 #alt:
    def assign_zone(x, y):
@@ -295,6 +339,8 @@ def assign_fuzzy_zone(df, x_col='x', y_col='y'):
         row = int(min(y // (80/4), 3))
         return row * 5 + col
 """
+
+
  
 
 
